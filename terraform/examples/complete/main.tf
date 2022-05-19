@@ -20,7 +20,7 @@ module "vpc" {
 
 module "this" {
   source             = "../../"
-  docker_tag         = var.commit_sha
+  docker_tag         = var.docker_tag
   domain             = data.aws_route53_zone.this.name
   private_subnet_ids = module.vpc.private_subnets_ids
   public_subnet_ids  = module.vpc.public_subnets_ids

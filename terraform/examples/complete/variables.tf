@@ -1,4 +1,4 @@
-variable "commit_sha" {
-  description = "Git commit SHA of code expected to be deployed"
+variable "docker_tag" {
+  description = "Docker tag to deploy"
   type        = string
 }
