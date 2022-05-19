@@ -17,7 +17,7 @@ const amazonUrl = "aws.amazon.com/console"
 const badUrl = "1.com/foo"
 const notAllowedUrl = "www.example.com/foo/bar"
 const retryDelaySeconds = 5
-const retryAttempts = 120
+const retryAttempts = 36
 
 func TestIris(t *testing.T) {
 
@@ -48,9 +48,6 @@ func TestIris(t *testing.T) {
 	t.Log("testing failed request to unreachable url")
 	err = checkHttpStatusAndBody(t, dns, badUrl, "Internal Server Error", http.StatusInternalServerError)
 	assert.NoError(t, err)
-
-	t.Log("delaying destroy to allow for troubleshooting time")
-	time.Sleep(10 * time.Minute)
 }
 
 func checkHttpStatusAndBody(t *testing.T, dns, upstreamUrl, expectedBody string, expectedHttpStatus int) error {
