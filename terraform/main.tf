@@ -19,10 +19,19 @@ resource "random_string" "identifier" {
   number  = true
 }
 
+module "acm" {
+  source            = "github.com/champ-oss/terraform-aws-acm.git?ref=v1.0.1-1cb7679"
+  git               = var.git
+  domain_name       = local.dns
+  create_wildcard   = false
+  zone_id           = var.zone_id
+  enable_validation = true
+}
+
 module "alb" {
   source          = "github.com/champ-oss/terraform-aws-alb.git?ref=v1.0.4-e4392ee"
   git             = var.git
-  certificate_arn = var.certificate_arn
+  certificate_arn = module.acm.arn
   subnet_ids      = var.public_subnet_ids
   vpc_id          = var.vpc_id
   internal        = false

@@ -36,11 +36,6 @@ variable "private_subnet_ids" {
   type        = list(string)
 }
 
-variable "certificate_arn" {
-  description = "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener#certificate_arn"
-  type        = string
-}
-
 variable "hostname" {
   description = "Optional hostname for Iris. If omitted a random identifier will be used."
   type        = string

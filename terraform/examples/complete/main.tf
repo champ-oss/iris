@@ -18,18 +18,8 @@ module "vpc" {
   create_private_subnets   = true
 }
 
-module "acm" {
-  source            = "github.com/champ-oss/terraform-aws-acm.git?ref=v1.0.1-1cb7679"
-  git               = local.git
-  domain_name       = "${local.git}.${data.aws_route53_zone.this.name}"
-  create_wildcard   = false
-  zone_id           = data.aws_route53_zone.this.zone_id
-  enable_validation = true
-}
-
 module "this" {
   source             = "../../"
-  certificate_arn    = module.acm.arn
   commit_sha         = var.commit_sha
   domain             = data.aws_route53_zone.this.name
   private_subnet_ids = module.vpc.private_subnets_ids
