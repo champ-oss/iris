@@ -67,8 +67,8 @@ resource "null_resource" "sync_dockerhub_ecr" {
   depends_on = [aws_ecr_repository.this]
 
   triggers = {
-    ecr_name = aws_ecr_repository.this.name
-    docker_tag  = var.docker_tag
+    ecr_name   = aws_ecr_repository.this.name
+    docker_tag = var.docker_tag
   }
 
   provisioner "local-exec" {
