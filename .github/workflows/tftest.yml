@@ -19,8 +19,6 @@ env:
   MONGODB_ATLAS_ORG: ${{ secrets.MONGODB_ATLAS_ORG }}
   SLACK_URL: ${{ secrets.SLACK_URL }}
 
-concurrency: tftest
-
 defaults:
   run:
     shell: bash
@@ -43,9 +41,5 @@ jobs:
 
       - name: Terratest
         run: |
-          export TF_INPUT=${TF_INPUT:-false}
-          export TF_IN_AUTOMATION=${TF_IN_AUTOMATION:-true}
-          # download dependencies
           go mod download
-          # execute terratest
           go test -v -timeout 90m
