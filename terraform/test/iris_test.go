@@ -62,7 +62,7 @@ func checkHttpStatusAndBody(t *testing.T, dns, upstreamUrl, expectedBody string,
 		if err != nil {
 			t.Log(err)
 		} else {
-			t.Logf("StatusCode: %s", resp.StatusCode)
+			t.Logf("StatusCode: %d", resp.StatusCode)
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				t.Log(err)
