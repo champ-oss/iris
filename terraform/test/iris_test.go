@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 )
 
 // Upstream urls to test with
@@ -55,6 +56,9 @@ func TestIris(t *testing.T) {
 	status, body = getHttpStatusAndBody(t, dns, badUrl)
 	assert.Equal(t, http.StatusInternalServerError, status)
 	assert.Equal(t, "Internal Server Error", body)
+
+	t.Log("delaying destroy to allow for troubleshooting time")
+	time.Sleep(10 * time.Minute)
 }
 
 func getHttpStatusAndBody(t *testing.T, dns, upstreamUrl string) (int, string) {
