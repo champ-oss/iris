@@ -29,6 +29,7 @@ module "this" {
 
   allowed_urls = [
     "about.google/google-in-america",
-    "aws.amazon.com/console"
+    "aws.amazon.com/console",
+    "1.com/foo"
   ]
 }
