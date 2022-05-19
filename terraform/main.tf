@@ -56,7 +56,7 @@ module "lambda" {
   dns_name             = local.dns
   ecr_account          = data.aws_caller_identity.this.account_id
   ecr_name             = aws_ecr_repository.this.name
-  ecr_tag              = var.commit_sha
+  ecr_tag              = var.docker_tag
   tags                 = merge(local.tags, var.tags)
   environment = {
     ALLOWED_URLS = join(",", var.allowed_urls)
@@ -68,7 +68,7 @@ resource "null_resource" "sync_dockerhub_ecr" {
 
   triggers = {
     ecr_name = aws_ecr_repository.this.name
-    ecr_tag  = var.commit_sha
+    docker_tag  = var.docker_tag
   }
 
   provisioner "local-exec" {
@@ -79,7 +79,7 @@ resource "null_resource" "sync_dockerhub_ecr" {
       SLEEP       = 5
       AWS_REGION  = data.aws_region.this.name
       SOURCE_REPO = "champtitles/iris"
-      IMAGE_TAG   = var.commit_sha
+      IMAGE_TAG   = var.docker_tag
       ECR_ACCOUNT = data.aws_caller_identity.this.account_id
       ECR_NAME    = aws_ecr_repository.this.name
     }

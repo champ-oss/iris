@@ -16,15 +16,16 @@ const googleUrl = "about.google/google-in-america"
 const amazonUrl = "aws.amazon.com/console"
 const badUrl = "1.com/foo"
 const notAllowedUrl = "www.example.com/foo/bar"
+const retryDelaySeconds = 5
+const retryAttempts = 120
 
-// TestIris tests the application in an ephemeral environment
 func TestIris(t *testing.T) {
 
 	terraformOptions := &terraform.Options{
 		TerraformDir:  "../examples/complete",
 		BackendConfig: map[string]interface{}{},
 		Vars: map[string]interface{}{
-			"commit_sha": os.Getenv("GITHUB_SHA"),
+			"docker_tag": os.Getenv("GITHUB_SHA"),
 		},
 	}
 	defer terraform.Destroy(t, terraformOptions)
@@ -33,48 +34,51 @@ func TestIris(t *testing.T) {
 	dns := terraform.Output(t, terraformOptions, "dns")
 
 	t.Log("testing successful request to upstream google")
-	status, body := getHttpStatusAndBody(t, dns, googleUrl)
-	assert.Equal(t, http.StatusOK, status)
-	assert.Equal(t, "OK", body)
+	err := checkHttpStatusAndBody(t, dns, googleUrl, "OK", http.StatusOK)
+	assert.NoError(t, err)
 
 	t.Log("testing successful request to upstream amazon")
-	status, body = getHttpStatusAndBody(t, dns, amazonUrl)
-	assert.Equal(t, http.StatusOK, status)
-	assert.Equal(t, "OK", body)
+	err = checkHttpStatusAndBody(t, dns, amazonUrl, "OK", http.StatusOK)
+	assert.NoError(t, err)
 
 	t.Log("testing failed request to not allowed url")
-	status, body = getHttpStatusAndBody(t, dns, notAllowedUrl)
-	assert.Equal(t, http.StatusForbidden, status)
-	assert.Equal(t, "not allowed", body)
-
-	t.Log("testing failed request using POST")
-	status, body = postHttpStatusAndBody(t, dns, googleUrl)
-	assert.Equal(t, http.StatusForbidden, status)
-	assert.Equal(t, "method not allowed", body)
+	err = checkHttpStatusAndBody(t, dns, notAllowedUrl, "not allowed", http.StatusForbidden)
+	assert.NoError(t, err)
 
 	t.Log("testing failed request to unreachable url")
-	status, body = getHttpStatusAndBody(t, dns, badUrl)
-	assert.Equal(t, http.StatusInternalServerError, status)
-	assert.Equal(t, "Internal Server Error", body)
+	err = checkHttpStatusAndBody(t, dns, badUrl, "Internal Server Error", http.StatusInternalServerError)
+	assert.NoError(t, err)
 
 	t.Log("delaying destroy to allow for troubleshooting time")
 	time.Sleep(10 * time.Minute)
 }
 
-func getHttpStatusAndBody(t *testing.T, dns, upstreamUrl string) (int, string) {
-	resp, err := http.Get(fmt.Sprintf("https://%s/%s", dns, upstreamUrl))
-	assert.NoError(t, err)
+func checkHttpStatusAndBody(t *testing.T, dns, upstreamUrl, expectedBody string, expectedHttpStatus int) error {
+	url := fmt.Sprintf("https://%s/%s", dns, upstreamUrl)
+	t.Logf("checking %s", url)
 
-	body, err := ioutil.ReadAll(resp.Body)
-	assert.NoError(t, err)
-	return resp.StatusCode, string(body)
-}
+	for i := 0; ; i++ {
+		resp, err := http.Get(url)
+		if err != nil {
+			t.Log(err)
+		} else {
+			t.Logf("StatusCode: %s", resp.StatusCode)
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				t.Log(err)
+			} else {
+				t.Logf("body: %s", body)
+				if resp.StatusCode == expectedHttpStatus && string(body) == expectedBody {
+					return nil
+				}
+			}
+		}
 
-func postHttpStatusAndBody(t *testing.T, dns, upstreamUrl string) (int, string) {
-	resp, err := http.Post(fmt.Sprintf("https://%s/%s", dns, upstreamUrl), "text/plain", nil)
-	assert.NoError(t, err)
+		if i >= (retryAttempts - 1) {
+			panic("Timed out while retrying")
+		}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	assert.NoError(t, err)
-	return resp.StatusCode, string(body)
+		t.Logf("Retrying in %d seconds...", retryDelaySeconds)
+		time.Sleep(time.Second * retryDelaySeconds)
+	}
 }
