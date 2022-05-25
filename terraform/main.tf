@@ -19,7 +19,7 @@ resource "random_string" "identifier" {
 
 module "lambda" {
   depends_on                      = [null_resource.sync_dockerhub_ecr]
-  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=da9a5032bffd602de4c47f363935370a2dc29d9c"
+  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=2a54a80fd659d856ce2ac7eff4390d0a9c2cdcbb"
   git                             = var.git
   name                            = random_string.identifier.result
   vpc_id                          = var.enable_vpc ? var.vpc_id : null
