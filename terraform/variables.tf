@@ -21,34 +21,27 @@ variable "git" {
   default     = "iris"
 }
 
+variable "enable_vpc" {
+  description = "Run the lambda inside a VPC"
+  type        = bool
+  default     = false
+}
+
 variable "vpc_id" {
   description = "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group#vpc_id"
   type        = string
-}
-
-variable "public_subnet_ids" {
-  description = "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb#subnets"
-  type        = list(string)
+  default     = ""
 }
 
 variable "private_subnet_ids" {
   description = "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster#subnet_ids"
   type        = list(string)
+  default     = []
 }
 
-variable "hostname" {
-  description = "Optional hostname for Iris. If omitted a random identifier will be used."
-  type        = string
-  default     = null
-}
-
-variable "domain" {
-  description = "Route53 Domain"
-  type        = string
-}
-
-variable "zone_id" {
-  description = "Route53 Zone ID"
-  type        = string
+variable "reserved_concurrent_executions" {
+  description = "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function#reserved_concurrent_executions"
+  type        = number
+  default     = 1
 }
 
