@@ -50,7 +50,7 @@ resource "null_resource" "sync_dockerhub_ecr" {
     interpreter = ["/bin/sh", "-c"]
     environment = {
       RETRIES     = 60
-      SLEEP       = 5
+      SLEEP       = 10
       AWS_REGION  = data.aws_region.this.name
       SOURCE_REPO = "champtitles/iris"
       IMAGE_TAG   = var.docker_tag

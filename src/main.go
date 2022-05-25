@@ -71,10 +71,7 @@ func HandleRequest(ctx context.Context, event Event) (*Response, error) {
 // logRequest logs request details from the load balancer
 func logRequest(ctx context.Context, event Event) {
 	log.Debugf("context: %s", ctx)
-	log.Debugf("HttpMethod: %s", event.HttpMethod)
-	log.Debugf("Path: %s", event.Path)
-	log.Debugf("QueryStringParameters: %s", event.QueryStringParameters)
-	log.Debugf("Body: %s", event.Body)
+	log.Debugf("event: %s", event)
 }
 
 // getAllowedURLs parses a comma separated list of allowed URLs from env variable
