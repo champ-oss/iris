@@ -41,7 +41,7 @@ module "alb" {
 
 module "lambda" {
   depends_on           = [null_resource.sync_dockerhub_ecr]
-  source               = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.6-e2d9736"
+  source               = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.16-367d276"
   git                  = var.git
   name                 = random_string.identifier.result
   vpc_id               = var.vpc_id
