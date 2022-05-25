@@ -20,7 +20,7 @@ resource "random_string" "identifier" {
 }
 
 module "acm" {
-  source            = "github.com/champ-oss/terraform-aws-acm.git?ref=v1.0.1-1cb7679"
+  source            = "github.com/champ-oss/terraform-aws-acm.git?ref=v1.0.18-515fb55"
   git               = var.git
   domain_name       = local.dns
   create_wildcard   = false
