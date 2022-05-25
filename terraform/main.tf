@@ -29,7 +29,7 @@ module "acm" {
 }
 
 module "alb" {
-  source          = "github.com/champ-oss/terraform-aws-alb.git?ref=v1.0.4-e4392ee"
+  source          = "github.com/champ-oss/terraform-aws-alb.git?ref=v1.0.16-11acfa4"
   git             = var.git
   certificate_arn = module.acm.arn
   subnet_ids      = var.public_subnet_ids
