@@ -127,6 +127,16 @@ func TestHandleRequest(t *testing.T) {
 		assert.Equal(t, "Forbidden", resp.StatusDescription)
 		assert.Equal(t, "not allowed", resp.Body)
 	})
+
+	t.Run("url not set", func(t *testing.T) {
+		envKey := "ALLOWED_URLS"
+		_ = os.Setenv(envKey, "www.google.com/foo,www.facebook.com/bar")
+		resp, err := HandleRequest(context.Background(), Event{})
+		assert.Nil(t, err)
+		assert.Equal(t, 403, resp.StatusCode)
+		assert.Equal(t, "Forbidden", resp.StatusDescription)
+		assert.Equal(t, "not allowed", resp.Body)
+	})
 }
 
 func Test_logRequest(t *testing.T) {
