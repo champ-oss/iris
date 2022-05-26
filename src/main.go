@@ -10,10 +10,12 @@ import (
 	"strings"
 )
 
+type QueryStringParameters struct {
+	Url string `json:"url"`
+}
+
 type Event struct {
-	QueryStringParameters struct {
-		Url string `json:"url"`
-	} `json:"queryStringParameters"`
+	QueryStringParameters QueryStringParameters `json:"queryStringParameters"`
 }
 
 type Response struct {
