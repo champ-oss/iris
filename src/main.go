@@ -11,14 +11,10 @@ import (
 )
 
 type Event struct {
-	HttpMethod            string            `json:"httpMethod"`
-	Path                  string            `json:"path"`
-	QueryStringParameters map[string]string `json:"queryStringParameters"`
-	Body                  string            `json:"body"`
+	Url string `json:"url"`
 }
 
 type Response struct {
-	IsBase64Encoded   bool             `json:"isBase64Encoded"`
 	StatusCode        int              `json:"statusCode"`
 	StatusDescription string           `json:"statusDescription"`
 	Headers           *ResponseHeaders `json:"headers"`
@@ -36,23 +32,11 @@ func HandleRequest(ctx context.Context, event Event) (*Response, error) {
 	logRequest(ctx, event)
 	resp := &Response{Headers: &ResponseHeaders{ContentType: "text/plain"}, Body: ""}
 
-	// only allow GET or HEAD requests
-	if event.HttpMethod != http.MethodGet && event.HttpMethod != http.MethodHead {
-		log.Warningf("method not allowed: %s", event.HttpMethod)
-		resp.StatusCode = http.StatusForbidden
-		resp.StatusDescription = http.StatusText(http.StatusForbidden)
-		resp.Body = "method not allowed"
-		return resp, nil
-	}
-
-	// Remove the "/" at the beginning of the requested path
-	event.Path = strings.TrimPrefix(event.Path, "/")
-
 	// Load comma separated list of allowed upstream URLs
 	allowedURLs := getAllowedURLs("ALLOWED_URLS")
 
-	if !isAllowedURL(event.Path, allowedURLs) {
-		log.Warningf("Requested url is not allowed: %s", event.Path)
+	if !isAllowedURL(event.Url, allowedURLs) {
+		log.Warningf("Requested url is not allowed: %s", event.Url)
 		log.Debugf("allowed urls: %v", allowedURLs)
 		resp.StatusCode = http.StatusForbidden
 		resp.StatusDescription = http.StatusText(http.StatusForbidden)
@@ -61,7 +45,7 @@ func HandleRequest(ctx context.Context, event Event) (*Response, error) {
 	}
 
 	// Send the upstream request and pass along the returned status code
-	status := httpGetReturnStatusCode(event.Path)
+	status := httpGetReturnStatusCode(event.Url)
 	resp.StatusCode = status
 	resp.StatusDescription = http.StatusText(status)
 	resp.Body = http.StatusText(status)
