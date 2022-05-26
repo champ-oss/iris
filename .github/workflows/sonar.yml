@@ -3,6 +3,7 @@ name: sonar
 on:
   workflow_dispatch:
   pull_request:
+  push:
 
 jobs:
   sonar:

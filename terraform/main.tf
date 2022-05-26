@@ -1,6 +1,4 @@
 locals {
-  dns = var.hostname != null ? "${var.hostname}.${var.domain}" : "${var.git}-${random_string.identifier.result}.${var.domain}"
-
   tags = {
     cost    = "shared"
     creator = "terraform"
@@ -11,53 +9,21 @@ locals {
 data "aws_region" "this" {}
 data "aws_caller_identity" "this" {}
 
-resource "random_string" "identifier" {
-  length  = 5
-  special = false
-  upper   = false
-  lower   = true
-  number  = true
-}
-
-module "acm" {
-  source            = "github.com/champ-oss/terraform-aws-acm.git?ref=v1.0.18-515fb55"
-  git               = var.git
-  domain_name       = local.dns
-  create_wildcard   = false
-  zone_id           = var.zone_id
-  enable_validation = true
-}
-
-module "alb" {
-  source          = "github.com/champ-oss/terraform-aws-alb.git?ref=v1.0.17-17bd35c"
-  git             = var.git
-  certificate_arn = module.acm.arn
-  subnet_ids      = var.public_subnet_ids
-  vpc_id          = var.vpc_id
-  internal        = false
-  protect         = false
-  tags            = merge(local.tags, var.tags)
-}
-
 module "lambda" {
-  depends_on           = [null_resource.sync_dockerhub_ecr]
-  source               = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.16-367d276"
-  git                  = var.git
-  name                 = random_string.identifier.result
-  vpc_id               = var.vpc_id
-  private_subnet_ids   = var.private_subnet_ids
-  zone_id              = var.zone_id
-  listener_arn         = module.alb.listener_arn
-  lb_dns_name          = module.alb.dns_name
-  lb_zone_id           = module.alb.zone_id
-  enable_load_balancer = true
-  enable_route53       = true
-  enable_vpc           = true
-  dns_name             = local.dns
-  ecr_account          = data.aws_caller_identity.this.account_id
-  ecr_name             = aws_ecr_repository.this.name
-  ecr_tag              = var.docker_tag
-  tags                 = merge(local.tags, var.tags)
+  depends_on                      = [null_resource.sync_dockerhub_ecr]
+  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.18-d75c501"
+  git                             = var.git
+  name                            = "lambda"
+  vpc_id                          = var.enable_vpc ? var.vpc_id : null
+  private_subnet_ids              = var.enable_vpc ? var.private_subnet_ids : null
+  enable_vpc                      = var.enable_vpc
+  enable_function_url             = true
+  function_url_authorization_type = "NONE"
+  reserved_concurrent_executions  = var.reserved_concurrent_executions
+  ecr_account                     = data.aws_caller_identity.this.account_id
+  ecr_name                        = aws_ecr_repository.this.name
+  ecr_tag                         = var.docker_tag
+  tags                            = merge(local.tags, var.tags)
   environment = {
     ALLOWED_URLS = join(",", var.allowed_urls)
   }
@@ -76,7 +42,7 @@ resource "null_resource" "sync_dockerhub_ecr" {
     interpreter = ["/bin/sh", "-c"]
     environment = {
       RETRIES     = 60
-      SLEEP       = 5
+      SLEEP       = 10
       AWS_REGION  = data.aws_region.this.name
       SOURCE_REPO = "champtitles/iris"
       IMAGE_TAG   = var.docker_tag
@@ -87,7 +53,7 @@ resource "null_resource" "sync_dockerhub_ecr" {
 }
 
 resource "aws_ecr_repository" "this" {
-  name = "${var.git}-${random_string.identifier.result}"
+  name = "${var.git}-lambda"
   tags = merge(local.tags, var.tags)
 
   image_scanning_configuration {

@@ -63,9 +63,9 @@ func TestHandleRequest(t *testing.T) {
 		defer gock.Off()
 		gock.New("https://www.facebook.com").Get("/bar").Reply(200)
 		resp, err := HandleRequest(context.Background(), Event{
-			HttpMethod: "GET",
-			Path:       "/www.facebook.com/bar",
-		})
+			QueryStringParameters: QueryStringParameters{
+				Url: "www.facebook.com/bar",
+			}})
 		assert.Nil(t, err)
 		assert.Equal(t, 200, resp.StatusCode)
 		assert.Equal(t, "OK", resp.StatusDescription)
@@ -79,9 +79,9 @@ func TestHandleRequest(t *testing.T) {
 		defer gock.Off()
 		gock.New("https://www.facebook.com").Get("/bar").Reply(200)
 		resp, err := HandleRequest(context.Background(), Event{
-			HttpMethod: "HEAD",
-			Path:       "/www.facebook.com/bar",
-		})
+			QueryStringParameters: QueryStringParameters{
+				Url: "www.facebook.com/bar",
+			}})
 		assert.Nil(t, err)
 		assert.Equal(t, 200, resp.StatusCode)
 		assert.Equal(t, "OK", resp.StatusDescription)
@@ -95,9 +95,9 @@ func TestHandleRequest(t *testing.T) {
 		defer gock.Off()
 		gock.New("https://www.facebook.com").Get("/bar").Reply(400)
 		resp, err := HandleRequest(context.Background(), Event{
-			HttpMethod: "GET",
-			Path:       "/www.facebook.com/bar",
-		})
+			QueryStringParameters: QueryStringParameters{
+				Url: "www.facebook.com/bar",
+			}})
 		assert.Nil(t, err)
 		assert.Equal(t, 400, resp.StatusCode)
 		assert.Equal(t, "Bad Request", resp.StatusDescription)
@@ -111,55 +111,32 @@ func TestHandleRequest(t *testing.T) {
 		defer gock.Off()
 		gock.New("https://foo.com").Get("/bar").Reply(200)
 		resp, err := HandleRequest(context.Background(), Event{
-			HttpMethod: "GET",
-			Path:       "/www.facebook.com/bar",
-		})
+			QueryStringParameters: QueryStringParameters{
+				Url: "www.facebook.com/bar",
+			}})
 		assert.Nil(t, err)
 		assert.Equal(t, 500, resp.StatusCode)
 		assert.Equal(t, "Internal Server Error", resp.StatusDescription)
 		assert.Equal(t, "Internal Server Error", resp.Body)
 	})
 
-	t.Run("PUT request", func(t *testing.T) {
-		resp, err := HandleRequest(context.Background(), Event{
-			HttpMethod: "PUT",
-			Path:       "/www.facebook.com/bar",
-		})
-		assert.Nil(t, err)
-		assert.Equal(t, 403, resp.StatusCode)
-		assert.Equal(t, "Forbidden", resp.StatusDescription)
-		assert.Equal(t, "method not allowed", resp.Body)
-	})
-
-	t.Run("POST request", func(t *testing.T) {
-		resp, err := HandleRequest(context.Background(), Event{
-			HttpMethod: "POST",
-			Path:       "/www.facebook.com/bar",
-		})
-		assert.Nil(t, err)
-		assert.Equal(t, 403, resp.StatusCode)
-		assert.Equal(t, "Forbidden", resp.StatusDescription)
-		assert.Equal(t, "method not allowed", resp.Body)
-	})
-
-	t.Run("DELETE request", func(t *testing.T) {
-		resp, err := HandleRequest(context.Background(), Event{
-			HttpMethod: "DELETE",
-			Path:       "/www.facebook.com/bar",
-		})
-		assert.Nil(t, err)
-		assert.Equal(t, 403, resp.StatusCode)
-		assert.Equal(t, "Forbidden", resp.StatusDescription)
-		assert.Equal(t, "method not allowed", resp.Body)
-	})
-
 	t.Run("not an allowed url", func(t *testing.T) {
 		envKey := "ALLOWED_URLS"
 		_ = os.Setenv(envKey, "www.google.com/foo,www.facebook.com/bar")
 		resp, err := HandleRequest(context.Background(), Event{
-			HttpMethod: "GET",
-			Path:       "/www.foo.com/bar",
-		})
+			QueryStringParameters: QueryStringParameters{
+				Url: "www.foo.com/bar",
+			}})
+		assert.Nil(t, err)
+		assert.Equal(t, 403, resp.StatusCode)
+		assert.Equal(t, "Forbidden", resp.StatusDescription)
+		assert.Equal(t, "not allowed", resp.Body)
+	})
+
+	t.Run("url not set", func(t *testing.T) {
+		envKey := "ALLOWED_URLS"
+		_ = os.Setenv(envKey, "www.google.com/foo,www.facebook.com/bar")
+		resp, err := HandleRequest(context.Background(), Event{})
 		assert.Nil(t, err)
 		assert.Equal(t, 403, resp.StatusCode)
 		assert.Equal(t, "Forbidden", resp.StatusDescription)
@@ -169,11 +146,7 @@ func TestHandleRequest(t *testing.T) {
 
 func Test_logRequest(t *testing.T) {
 	logRequest(context.Background(), Event{
-		HttpMethod: "GET",
-		Path:       "/foo",
-		QueryStringParameters: map[string]string{
-			"foo": "bar",
-		},
-		Body: "foo",
-	})
+		QueryStringParameters: QueryStringParameters{
+			Url: "www.foo.com/bar",
+		}})
 }

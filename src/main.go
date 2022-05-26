@@ -10,15 +10,15 @@ import (
 	"strings"
 )
 
+type QueryStringParameters struct {
+	Url string `json:"url"`
+}
+
 type Event struct {
-	HttpMethod            string            `json:"httpMethod"`
-	Path                  string            `json:"path"`
-	QueryStringParameters map[string]string `json:"queryStringParameters"`
-	Body                  string            `json:"body"`
+	QueryStringParameters QueryStringParameters `json:"queryStringParameters"`
 }
 
 type Response struct {
-	IsBase64Encoded   bool             `json:"isBase64Encoded"`
 	StatusCode        int              `json:"statusCode"`
 	StatusDescription string           `json:"statusDescription"`
 	Headers           *ResponseHeaders `json:"headers"`
@@ -36,23 +36,12 @@ func HandleRequest(ctx context.Context, event Event) (*Response, error) {
 	logRequest(ctx, event)
 	resp := &Response{Headers: &ResponseHeaders{ContentType: "text/plain"}, Body: ""}
 
-	// only allow GET or HEAD requests
-	if event.HttpMethod != http.MethodGet && event.HttpMethod != http.MethodHead {
-		log.Warningf("method not allowed: %s", event.HttpMethod)
-		resp.StatusCode = http.StatusForbidden
-		resp.StatusDescription = http.StatusText(http.StatusForbidden)
-		resp.Body = "method not allowed"
-		return resp, nil
-	}
-
-	// Remove the "/" at the beginning of the requested path
-	event.Path = strings.TrimPrefix(event.Path, "/")
-
 	// Load comma separated list of allowed upstream URLs
 	allowedURLs := getAllowedURLs("ALLOWED_URLS")
+	upstreamUrl := event.QueryStringParameters.Url
 
-	if !isAllowedURL(event.Path, allowedURLs) {
-		log.Warningf("Requested url is not allowed: %s", event.Path)
+	if !isAllowedURL(upstreamUrl, allowedURLs) {
+		log.Warningf("Requested url is not allowed: %s", upstreamUrl)
 		log.Debugf("allowed urls: %v", allowedURLs)
 		resp.StatusCode = http.StatusForbidden
 		resp.StatusDescription = http.StatusText(http.StatusForbidden)
@@ -61,7 +50,7 @@ func HandleRequest(ctx context.Context, event Event) (*Response, error) {
 	}
 
 	// Send the upstream request and pass along the returned status code
-	status := httpGetReturnStatusCode(event.Path)
+	status := httpGetReturnStatusCode(upstreamUrl)
 	resp.StatusCode = status
 	resp.StatusDescription = http.StatusText(status)
 	resp.Body = http.StatusText(status)
@@ -71,10 +60,7 @@ func HandleRequest(ctx context.Context, event Event) (*Response, error) {
 // logRequest logs request details from the load balancer
 func logRequest(ctx context.Context, event Event) {
 	log.Debugf("context: %s", ctx)
-	log.Debugf("HttpMethod: %s", event.HttpMethod)
-	log.Debugf("Path: %s", event.Path)
-	log.Debugf("QueryStringParameters: %s", event.QueryStringParameters)
-	log.Debugf("Body: %s", event.Body)
+	log.Debugf("event: %s", event)
 }
 
 // getAllowedURLs parses a comma separated list of allowed URLs from env variable

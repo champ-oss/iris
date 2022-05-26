@@ -11,11 +11,6 @@ import (
 	"time"
 )
 
-// Upstream urls to test with
-const googleUrl = "about.google/google-in-america"
-const amazonUrl = "aws.amazon.com/console"
-const badUrl = "1.com/foo"
-const notAllowedUrl = "www.example.com/foo/bar"
 const retryDelaySeconds = 5
 const retryAttempts = 36
 
@@ -31,27 +26,38 @@ func TestIris(t *testing.T) {
 	defer terraform.Destroy(t, terraformOptions)
 	terraform.InitAndApplyAndIdempotent(t, terraformOptions)
 
-	dns := terraform.Output(t, terraformOptions, "dns")
+	functionUrl := terraform.Output(t, terraformOptions, "function_url")
 
 	t.Log("testing successful request to upstream google")
-	err := checkHttpStatusAndBody(t, dns, googleUrl, "OK", http.StatusOK)
+	err := checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "about.google/google-in-america"), "OK", http.StatusOK)
 	assert.NoError(t, err)
 
 	t.Log("testing successful request to upstream amazon")
-	err = checkHttpStatusAndBody(t, dns, amazonUrl, "OK", http.StatusOK)
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "aws.amazon.com/console"), "OK", http.StatusOK)
 	assert.NoError(t, err)
 
 	t.Log("testing failed request to not allowed url")
-	err = checkHttpStatusAndBody(t, dns, notAllowedUrl, "not allowed", http.StatusForbidden)
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "www.example.com/foo/bar"), "not allowed", http.StatusForbidden)
 	assert.NoError(t, err)
 
 	t.Log("testing failed request to unreachable url")
-	err = checkHttpStatusAndBody(t, dns, badUrl, "Internal Server Error", http.StatusInternalServerError)
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "1.com/foo"), "Internal Server Error", http.StatusInternalServerError)
+	assert.NoError(t, err)
+
+	t.Log("testing failed request to empty url")
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, ""), "not allowed", http.StatusForbidden)
+	assert.NoError(t, err)
+
+	t.Log("testing failed request to missing url key")
+	err = checkHttpStatusAndBody(t, functionUrl, "not allowed", http.StatusForbidden)
+	assert.NoError(t, err)
+
+	t.Log("testing successful request to upstream amazon with upper case url")
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?URL=%s", functionUrl, "aws.amazon.com/console"), "OK", http.StatusOK)
 	assert.NoError(t, err)
 }
 
-func checkHttpStatusAndBody(t *testing.T, dns, upstreamUrl, expectedBody string, expectedHttpStatus int) error {
-	url := fmt.Sprintf("https://%s/%s", dns, upstreamUrl)
+func checkHttpStatusAndBody(t *testing.T, url, expectedBody string, expectedHttpStatus int) error {
 	t.Logf("checking %s", url)
 
 	for i := 0; ; i++ {
