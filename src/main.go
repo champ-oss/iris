@@ -11,10 +11,9 @@ import (
 )
 
 type Event struct {
-	QueryStringParameters map[string]string `json:"queryStringParameters"`
-	Url                   string            `json:"url"`
-	RawQueryString        string            `json:"rawQueryString"`
-	RawPath               string            `json:"rawPath"`
+	QueryStringParameters struct {
+		Url string `json:"url"`
+	} `json:"queryStringParameters"`
 }
 
 type Response struct {
@@ -37,7 +36,7 @@ func HandleRequest(ctx context.Context, event Event) (*Response, error) {
 
 	// Load comma separated list of allowed upstream URLs
 	allowedURLs := getAllowedURLs("ALLOWED_URLS")
-	upstreamUrl := event.QueryStringParameters["url"]
+	upstreamUrl := event.QueryStringParameters.Url
 
 	if !isAllowedURL(upstreamUrl, allowedURLs) {
 		log.Warningf("Requested url is not allowed: %s", upstreamUrl)

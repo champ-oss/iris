@@ -9,19 +9,11 @@ locals {
 data "aws_region" "this" {}
 data "aws_caller_identity" "this" {}
 
-resource "random_string" "identifier" {
-  length  = 5
-  special = false
-  upper   = false
-  lower   = true
-  number  = true
-}
-
 module "lambda" {
   depends_on                      = [null_resource.sync_dockerhub_ecr]
   source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=2a54a80fd659d856ce2ac7eff4390d0a9c2cdcbb"
   git                             = var.git
-  name                            = random_string.identifier.result
+  name                            = "lambda"
   vpc_id                          = var.enable_vpc ? var.vpc_id : null
   private_subnet_ids              = var.enable_vpc ? var.private_subnet_ids : null
   enable_vpc                      = var.enable_vpc
@@ -61,7 +53,7 @@ resource "null_resource" "sync_dockerhub_ecr" {
 }
 
 resource "aws_ecr_repository" "this" {
-  name = "${var.git}-${random_string.identifier.result}"
+  name = "${var.git}-lambda"
   tags = merge(local.tags, var.tags)
 
   image_scanning_configuration {
