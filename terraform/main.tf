@@ -11,7 +11,7 @@ data "aws_caller_identity" "this" {}
 
 module "lambda" {
   depends_on                      = [null_resource.sync_dockerhub_ecr]
-  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=2a54a80fd659d856ce2ac7eff4390d0a9c2cdcbb"
+  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.18-d75c501"
   git                             = var.git
   name                            = "lambda"
   vpc_id                          = var.enable_vpc ? var.vpc_id : null
