@@ -11,7 +11,10 @@ import (
 )
 
 type Event struct {
-	Url string `json:"url"`
+	QueryStringParameters map[string]string `json:"queryStringParameters"`
+	Url                   string            `json:"url"`
+	RawQueryString        string            `json:"rawQueryString"`
+	RawPath               string            `json:"rawPath"`
 }
 
 type Response struct {
