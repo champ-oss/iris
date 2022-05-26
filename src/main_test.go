@@ -62,7 +62,9 @@ func TestHandleRequest(t *testing.T) {
 		_ = os.Setenv(envKey, "www.google.com/foo,www.facebook.com/bar")
 		defer gock.Off()
 		gock.New("https://www.facebook.com").Get("/bar").Reply(200)
-		resp, err := HandleRequest(context.Background(), Event{Url: "www.facebook.com/bar"})
+		resp, err := HandleRequest(context.Background(), Event{
+			QueryStringParameters: map[string]string{"url": "www.facebook.com/bar"},
+		})
 		assert.Nil(t, err)
 		assert.Equal(t, 200, resp.StatusCode)
 		assert.Equal(t, "OK", resp.StatusDescription)
@@ -75,7 +77,9 @@ func TestHandleRequest(t *testing.T) {
 		_ = os.Setenv(envKey, "www.google.com/foo,www.facebook.com/bar")
 		defer gock.Off()
 		gock.New("https://www.facebook.com").Get("/bar").Reply(200)
-		resp, err := HandleRequest(context.Background(), Event{Url: "www.facebook.com/bar"})
+		resp, err := HandleRequest(context.Background(), Event{
+			QueryStringParameters: map[string]string{"url": "www.facebook.com/bar"},
+		})
 		assert.Nil(t, err)
 		assert.Equal(t, 200, resp.StatusCode)
 		assert.Equal(t, "OK", resp.StatusDescription)
@@ -88,7 +92,9 @@ func TestHandleRequest(t *testing.T) {
 		_ = os.Setenv(envKey, "www.google.com/foo,www.facebook.com/bar")
 		defer gock.Off()
 		gock.New("https://www.facebook.com").Get("/bar").Reply(400)
-		resp, err := HandleRequest(context.Background(), Event{Url: "www.facebook.com/bar"})
+		resp, err := HandleRequest(context.Background(), Event{
+			QueryStringParameters: map[string]string{"url": "www.facebook.com/bar"},
+		})
 		assert.Nil(t, err)
 		assert.Equal(t, 400, resp.StatusCode)
 		assert.Equal(t, "Bad Request", resp.StatusDescription)
@@ -101,7 +107,9 @@ func TestHandleRequest(t *testing.T) {
 		_ = os.Setenv(envKey, "www.google.com/foo,www.facebook.com/bar")
 		defer gock.Off()
 		gock.New("https://foo.com").Get("/bar").Reply(200)
-		resp, err := HandleRequest(context.Background(), Event{Url: "www.facebook.com/bar"})
+		resp, err := HandleRequest(context.Background(), Event{
+			QueryStringParameters: map[string]string{"url": "www.facebook.com/bar"},
+		})
 		assert.Nil(t, err)
 		assert.Equal(t, 500, resp.StatusCode)
 		assert.Equal(t, "Internal Server Error", resp.StatusDescription)
@@ -111,7 +119,9 @@ func TestHandleRequest(t *testing.T) {
 	t.Run("not an allowed url", func(t *testing.T) {
 		envKey := "ALLOWED_URLS"
 		_ = os.Setenv(envKey, "www.google.com/foo,www.facebook.com/bar")
-		resp, err := HandleRequest(context.Background(), Event{Url: "www.foo.com/bar"})
+		resp, err := HandleRequest(context.Background(), Event{
+			QueryStringParameters: map[string]string{"url": "www.foo.com/bar"},
+		})
 		assert.Nil(t, err)
 		assert.Equal(t, 403, resp.StatusCode)
 		assert.Equal(t, "Forbidden", resp.StatusDescription)

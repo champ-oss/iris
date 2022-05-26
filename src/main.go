@@ -37,9 +37,10 @@ func HandleRequest(ctx context.Context, event Event) (*Response, error) {
 
 	// Load comma separated list of allowed upstream URLs
 	allowedURLs := getAllowedURLs("ALLOWED_URLS")
+	upstreamUrl := event.QueryStringParameters["url"]
 
-	if !isAllowedURL(event.Url, allowedURLs) {
-		log.Warningf("Requested url is not allowed: %s", event.Url)
+	if !isAllowedURL(upstreamUrl, allowedURLs) {
+		log.Warningf("Requested url is not allowed: %s", upstreamUrl)
 		log.Debugf("allowed urls: %v", allowedURLs)
 		resp.StatusCode = http.StatusForbidden
 		resp.StatusDescription = http.StatusText(http.StatusForbidden)
@@ -48,7 +49,7 @@ func HandleRequest(ctx context.Context, event Event) (*Response, error) {
 	}
 
 	// Send the upstream request and pass along the returned status code
-	status := httpGetReturnStatusCode(event.Url)
+	status := httpGetReturnStatusCode(upstreamUrl)
 	resp.StatusCode = status
 	resp.StatusDescription = http.StatusText(status)
 	resp.Body = http.StatusText(status)
