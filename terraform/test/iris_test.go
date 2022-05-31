@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"testing"
 	"time"
 )
@@ -24,7 +25,14 @@ func TestIris(t *testing.T) {
 		},
 	}
 	defer terraform.Destroy(t, terraformOptions)
-	terraform.InitAndApplyAndIdempotent(t, terraformOptions)
+	terraform.Init(t, terraformOptions)
+
+	// recursively set prevent destroy to false
+	cmd := exec.Command("bash", "-c", "find . -type f -name '*.tf' -exec sed -i'' -e 's/prevent_destroy = true/prevent_destroy = false/g' {} +")
+	cmd.Dir = "../../"
+	_ = cmd.Run()
+
+	terraform.ApplyAndIdempotent(t, terraformOptions)
 
 	functionUrl := terraform.Output(t, terraformOptions, "function_url")
 

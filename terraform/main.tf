@@ -6,12 +6,8 @@ locals {
   }
 }
 
-data "aws_region" "this" {}
-data "aws_caller_identity" "this" {}
-
 module "lambda" {
-  depends_on                      = [null_resource.sync_dockerhub_ecr]
-  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.19-1702466"
+  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.21-a2758b8"
   git                             = var.git
   name                            = "lambda"
   vpc_id                          = var.enable_vpc ? var.vpc_id : null
@@ -20,43 +16,12 @@ module "lambda" {
   enable_function_url             = true
   function_url_authorization_type = "NONE"
   reserved_concurrent_executions  = var.reserved_concurrent_executions
-  ecr_account                     = data.aws_caller_identity.this.account_id
-  ecr_name                        = aws_ecr_repository.this.name
+  sync_image                      = true
+  sync_source_repo                = "champtitles/iris"
+  ecr_name                        = "${var.git}-lambda"
   ecr_tag                         = var.docker_tag
   tags                            = merge(local.tags, var.tags)
   environment = {
     ALLOWED_URLS = join(",", var.allowed_urls)
-  }
-}
-
-resource "null_resource" "sync_dockerhub_ecr" {
-  depends_on = [aws_ecr_repository.this]
-
-  triggers = {
-    ecr_name   = aws_ecr_repository.this.name
-    docker_tag = var.docker_tag
-  }
-
-  provisioner "local-exec" {
-    command     = "sh ${path.module}/sync_dockerhub_ecr.sh"
-    interpreter = ["/bin/sh", "-c"]
-    environment = {
-      RETRIES     = 60
-      SLEEP       = 10
-      AWS_REGION  = data.aws_region.this.name
-      SOURCE_REPO = "champtitles/iris"
-      IMAGE_TAG   = var.docker_tag
-      ECR_ACCOUNT = data.aws_caller_identity.this.account_id
-      ECR_NAME    = aws_ecr_repository.this.name
-    }
-  }
-}
-
-resource "aws_ecr_repository" "this" {
-  name = "${var.git}-lambda"
-  tags = merge(local.tags, var.tags)
-
-  image_scanning_configuration {
-    scan_on_push = true
   }
 }
