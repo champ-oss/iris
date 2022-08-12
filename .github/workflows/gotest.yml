@@ -4,6 +4,11 @@ on:
   workflow_dispatch:
   push:
 
+permissions:
+  pull-requests: write
+  statuses: write
+  checks: write
+
 defaults:
   run:
     shell: bash
@@ -11,10 +16,6 @@ defaults:
 
 jobs:
   gotest:
-    permissions:
-      pull-requests: write
-      statuses: write
-      checks: write
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
