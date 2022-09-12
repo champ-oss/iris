@@ -7,7 +7,7 @@ locals {
 }
 
 module "lambda" {
-  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.92-3e98cfe"
+  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.97-948bb8b"
   git                             = var.git
   name                            = "lambda"
   vpc_id                          = var.enable_vpc ? var.vpc_id : null
