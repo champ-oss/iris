@@ -3,7 +3,7 @@ module github.com/champ-oss/iris
 go 1.17
 
 require (
-	github.com/aws/aws-lambda-go v1.38.0
+	github.com/aws/aws-lambda-go v1.39.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
 	gopkg.in/h2non/gock.v1 v1.1.2
