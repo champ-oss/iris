@@ -13,7 +13,7 @@ locals {
     creator = "terraform"
     git     = local.git
   }
-  expected_header_key   = "X-TEST-HEADER"
+  expected_header_key   = "x-test-header"
   expected_header_value = "25920B896F8744F4A33D3262EC7DD3DE"
 }
 
