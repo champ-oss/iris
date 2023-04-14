@@ -54,8 +54,12 @@ func TestIris(t *testing.T) {
 	err = checkHttpStatusAndBody(t, functionUrl, headerKey, headerVal, "Forbidden", http.StatusForbidden)
 	assert.NoError(t, err)
 
-	t.Log("testing successful request to upstream amazon with upper case url")
-	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?URL=%s", functionUrl, "aws.amazon.com/console"), headerKey, headerVal, "OK", http.StatusOK)
+	t.Log("testing failed request with missing header")
+	err = checkHttpStatusAndBody(t, functionUrl, "", "", "Forbidden", http.StatusForbidden)
+	assert.NoError(t, err)
+
+	t.Log("testing failed request with invalid header")
+	err = checkHttpStatusAndBody(t, functionUrl, headerKey, "", "Forbidden", http.StatusForbidden)
 	assert.NoError(t, err)
 }
 
