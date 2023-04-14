@@ -40,3 +40,16 @@ variable "reserved_concurrent_executions" {
   default     = 1
 }
 
+variable "expected_header_key" {
+  description = "(Optional) Header key that must be included on all requests"
+  type        = string
+  default     = ""
+}
+
+variable "expected_header_value" {
+  description = "(Optional) Header value that must be included on all requests"
+  type        = string
+  default     = ""
+}
+
+

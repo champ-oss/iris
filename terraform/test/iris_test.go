@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"testing"
@@ -27,46 +27,51 @@ func TestIris(t *testing.T) {
 	terraform.InitAndApplyAndIdempotent(t, terraformOptions)
 
 	functionUrl := terraform.Output(t, terraformOptions, "function_url")
+	headerKey := terraform.Output(t, terraformOptions, "expected_header_key")
+	headerVal := terraform.Output(t, terraformOptions, "expected_header_value")
 
 	t.Log("testing successful request to upstream google")
-	err := checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "about.google/google-in-america"), "OK", http.StatusOK)
+	err := checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "about.google/google-in-america"), headerKey, headerVal, "OK", http.StatusOK)
 	assert.NoError(t, err)
 
 	t.Log("testing successful request to upstream amazon")
-	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "aws.amazon.com/console"), "OK", http.StatusOK)
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "aws.amazon.com/console"), headerKey, headerVal, "OK", http.StatusOK)
 	assert.NoError(t, err)
 
 	t.Log("testing failed request to not allowed url")
-	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "www.example.com/foo/bar"), "not allowed", http.StatusForbidden)
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "www.example.com/foo/bar"), headerKey, headerVal, "Forbidden", http.StatusForbidden)
 	assert.NoError(t, err)
 
 	t.Log("testing failed request to unreachable url")
-	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "1.com/foo"), "Internal Server Error", http.StatusInternalServerError)
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, "1.com/foo"), headerKey, headerVal, "Internal Server Error", http.StatusInternalServerError)
 	assert.NoError(t, err)
 
 	t.Log("testing failed request to empty url")
-	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, ""), "not allowed", http.StatusForbidden)
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrl, ""), headerKey, headerVal, "Forbidden", http.StatusForbidden)
 	assert.NoError(t, err)
 
 	t.Log("testing failed request to missing url key")
-	err = checkHttpStatusAndBody(t, functionUrl, "not allowed", http.StatusForbidden)
+	err = checkHttpStatusAndBody(t, functionUrl, headerKey, headerVal, "Forbidden", http.StatusForbidden)
 	assert.NoError(t, err)
 
 	t.Log("testing successful request to upstream amazon with upper case url")
-	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?URL=%s", functionUrl, "aws.amazon.com/console"), "OK", http.StatusOK)
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?URL=%s", functionUrl, "aws.amazon.com/console"), headerKey, headerVal, "OK", http.StatusOK)
 	assert.NoError(t, err)
 }
 
-func checkHttpStatusAndBody(t *testing.T, url, expectedBody string, expectedHttpStatus int) error {
+func checkHttpStatusAndBody(t *testing.T, url, headerKey, headerVal, expectedBody string, expectedHttpStatus int) error {
 	t.Logf("checking %s", url)
+	client := &http.Client{}
+	request, _ := http.NewRequest("GET", url, nil)
+	request.Header.Set(headerKey, headerVal)
 
 	for i := 0; ; i++ {
-		resp, err := http.Get(url)
+		resp, err := client.Do(request)
 		if err != nil {
 			t.Log(err)
 		} else {
 			t.Logf("StatusCode: %d", resp.StatusCode)
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				t.Log(err)
 			} else {

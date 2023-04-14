@@ -28,6 +28,8 @@ module "lambda" {
   ecr_tag                         = module.hash.hash
   tags                            = merge(local.tags, var.tags)
   environment = {
-    ALLOWED_URLS = join(",", var.allowed_urls)
+    ALLOWED_URLS          = join(",", var.allowed_urls)
+    EXPECTED_HEADER_KEY   = var.expected_header_key
+    EXPECTED_HEADER_VALUE = var.expected_header_value
   }
 }
