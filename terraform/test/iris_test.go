@@ -55,7 +55,7 @@ func TestIris(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Log("testing failed request with missing header")
-	err = checkHttpStatusAndBody(t, functionUrl, "", "", "Forbidden", http.StatusForbidden)
+	err = checkHttpStatusAndBody(t, functionUrl, "foo", "", "Forbidden", http.StatusForbidden)
 	assert.NoError(t, err)
 
 	t.Log("testing failed request with invalid header")
