@@ -6,6 +6,12 @@ locals {
   }
 }
 
+module "hash" {
+  source   = "github.com/champ-oss/terraform-git-hash.git?ref=v1.0.12-fc3bb87"
+  path     = "${path.module}/.."
+  fallback = ""
+}
+
 module "lambda" {
   source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.114-72d2e3f"
   git                             = var.git
@@ -19,7 +25,7 @@ module "lambda" {
   sync_image                      = true
   sync_source_repo                = "champtitles/iris"
   ecr_name                        = "${var.git}-lambda"
-  ecr_tag                         = var.docker_tag
+  ecr_tag                         = module.hash.hash
   tags                            = merge(local.tags, var.tags)
   environment = {
     ALLOWED_URLS = join(",", var.allowed_urls)

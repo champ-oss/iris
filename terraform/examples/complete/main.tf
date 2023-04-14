@@ -8,7 +8,6 @@ locals {
 
 module "this" {
   source     = "../../"
-  docker_tag = var.docker_tag
   enable_vpc = false
 
   allowed_urls = [

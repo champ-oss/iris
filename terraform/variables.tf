@@ -1,8 +1,3 @@
-variable "docker_tag" {
-  description = "Docker tag to deploy"
-  type        = string
-}
-
 variable "allowed_urls" {
   description = "List of URLs that will be allowed to proxy"
   type        = list(string)
