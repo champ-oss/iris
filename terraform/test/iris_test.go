@@ -24,7 +24,6 @@ func TestIris(t *testing.T) {
 		},
 		Vars: map[string]interface{}{},
 	}
-	defer terraform.Destroy(t, terraformOptions)
 	terraform.InitAndApplyAndIdempotent(t, terraformOptions)
 
 	functionUrl := terraform.Output(t, terraformOptions, "function_url")
