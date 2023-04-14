@@ -26,7 +26,8 @@ func TestIris(t *testing.T) {
 	}
 	terraform.InitAndApplyAndIdempotent(t, terraformOptions)
 
-	functionUrl := terraform.Output(t, terraformOptions, "function_url")
+	functionUrl := terraform.Output(t, terraformOptions, "function_url")                   // Lambda that requires a special header
+	functionUrlNoHeader := terraform.Output(t, terraformOptions, "function_url_no_header") // Lambda that doesnt require a special header
 	headerKey := terraform.Output(t, terraformOptions, "expected_header_key")
 	headerVal := terraform.Output(t, terraformOptions, "expected_header_value")
 
@@ -60,6 +61,10 @@ func TestIris(t *testing.T) {
 
 	t.Log("testing failed request with invalid header")
 	err = checkHttpStatusAndBody(t, functionUrl, headerKey, "", "Forbidden", http.StatusForbidden)
+	assert.NoError(t, err)
+
+	t.Log("testing successful request to upstream amazon against the separate lambda with no header required")
+	err = checkHttpStatusAndBody(t, fmt.Sprintf("%s?url=%s", functionUrlNoHeader, "aws.amazon.com/console"), "foo", "", "OK", http.StatusOK)
 	assert.NoError(t, err)
 }
 

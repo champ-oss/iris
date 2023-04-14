@@ -29,3 +29,15 @@ module "this" {
     "1.com/foo"
   ]
 }
+
+# No special header required
+module "no_header" {
+  source     = "../../"
+  enable_vpc = false
+  tags       = local.tags
+  allowed_urls = [
+    "about.google/google-in-america",
+    "aws.amazon.com/console",
+    "1.com/foo"
+  ]
+}
