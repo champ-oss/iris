@@ -19,6 +19,7 @@ locals {
 
 module "this" {
   source                = "../../"
+  git                   = local.git
   enable_vpc            = false
   tags                  = local.tags
   expected_header_key   = local.expected_header_key
@@ -33,6 +34,7 @@ module "this" {
 # No special header required
 module "no_header" {
   source     = "../../"
+  git        = "${local.git}-no-header"
   enable_vpc = false
   tags       = local.tags
   allowed_urls = [
