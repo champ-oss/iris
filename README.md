@@ -25,7 +25,11 @@ The Lambda function will make an HTTP GET request to the `url` provided and retu
 No request body or headers will be passed to the internal service. And no response body or headers from your internal service will be returned from the lambda.
 
 
-## Deployment
-
-## Contributing
+## Expected Headers
+You can (optionally) set the Terraform variables: `expected_header_key` and `expected_header_value` to require the header
+to be present on every request. For example:
+```terraform
+expected_header_key=X-MY-HEADER
+expected_header_value=al1s9v8u210vn410vn
+```
 

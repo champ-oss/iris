@@ -2,21 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"strings"
 )
-
-type QueryStringParameters struct {
-	Url string `json:"url"`
-}
-
-type Event struct {
-	QueryStringParameters QueryStringParameters `json:"queryStringParameters"`
-}
 
 type Response struct {
 	StatusCode        int              `json:"statusCode"`
@@ -29,38 +23,69 @@ type ResponseHeaders struct {
 	ContentType string `json:"Content-Type"`
 }
 
-// HandleRequest is the entry point for lambda events
-func HandleRequest(ctx context.Context, event Event) (*Response, error) {
+var allowedURLs map[string]struct{}
+var expectedHeaderKey string
+var expectedHeaderValue string
+
+// init sets up the global state for the Lambda function
+func init() {
+	LoadSettings()
+}
+
+// LoadSettings sets log configuration and loads configuration settings
+func LoadSettings() {
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(&log.JSONFormatter{})
-	logRequest(ctx, event)
-	resp := &Response{Headers: &ResponseHeaders{ContentType: "text/plain"}, Body: ""}
 
-	// Load comma separated list of allowed upstream URLs
-	allowedURLs := getAllowedURLs("ALLOWED_URLS")
-	upstreamUrl := event.QueryStringParameters.Url
+	// Load comma-separated list of allowed upstream URLs
+	allowedURLs = getAllowedURLs("ALLOWED_URLS")
 
+	// Load optional header to check for in each request
+	expectedHeaderKey = os.Getenv("EXPECTED_HEADER_KEY")
+	expectedHeaderValue = os.Getenv("EXPECTED_HEADER_VALUE")
+
+	if expectedHeaderKey != "" {
+		log.Debugf("expected header: %s=%s", expectedHeaderKey, expectedHeaderValue)
+	}
+}
+
+// HandleRequest is the entry point for lambda events
+func HandleRequest(ctx context.Context, event events.LambdaFunctionURLRequest) (*Response, error) {
+	logAsJson("context", ctx)
+	logAsJson("event", event)
+
+	// Check if the expected header is present in the request
+	headerValue := event.Headers[expectedHeaderKey]
+	if headerValue != expectedHeaderValue {
+		log.Warningf("invalid header value: %s", headerValue)
+		log.Debugf("expected header: %s=%s", expectedHeaderKey, expectedHeaderValue)
+		return respondForbidden()
+	}
+
+	// Check if the requested upstream url is allowed
+	upstreamUrl := event.QueryStringParameters["url"]
 	if !isAllowedURL(upstreamUrl, allowedURLs) {
 		log.Warningf("Requested url is not allowed: %s", upstreamUrl)
 		log.Debugf("allowed urls: %v", allowedURLs)
-		resp.StatusCode = http.StatusForbidden
-		resp.StatusDescription = http.StatusText(http.StatusForbidden)
-		resp.Body = "not allowed"
-		return resp, nil
+		return respondForbidden()
 	}
 
 	// Send the upstream request and pass along the returned status code
 	status := httpGetReturnStatusCode(upstreamUrl)
-	resp.StatusCode = status
-	resp.StatusDescription = http.StatusText(status)
-	resp.Body = http.StatusText(status)
-	return resp, nil
+	return &Response{
+		StatusCode:        status,
+		StatusDescription: http.StatusText(status),
+		Headers: &ResponseHeaders{
+			ContentType: "text/plain",
+		},
+		Body: http.StatusText(status),
+	}, nil
 }
 
-// logRequest logs request details from the load balancer
-func logRequest(ctx context.Context, event Event) {
-	log.Debugf("context: %s", ctx)
-	log.Debugf("event: %s", event)
+// logAsJson logs the object as a JSON string
+func logAsJson(name string, object interface{}) {
+	data, _ := json.Marshal(object)
+	log.Debugf("%s: %s", name, data)
 }
 
 // getAllowedURLs parses a comma separated list of allowed URLs from env variable
@@ -96,6 +121,19 @@ func httpGetReturnStatusCode(url string) int {
 	}
 	log.Infof("upstream service responded with %d", resp.StatusCode)
 	return resp.StatusCode
+}
+
+// Generate a 403 Forbidden Response
+func respondForbidden() (*Response, error) {
+	return &Response{
+		StatusCode:        http.StatusForbidden,
+		StatusDescription: http.StatusText(http.StatusForbidden),
+		Headers: &ResponseHeaders{
+			ContentType: "text/plain",
+		},
+		Body: "Forbidden",
+	}, nil
+
 }
 
 func main() {
