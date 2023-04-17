@@ -1,8 +1,3 @@
-variable "docker_tag" {
-  description = "Docker tag to deploy"
-  type        = string
-}
-
 variable "allowed_urls" {
   description = "List of URLs that will be allowed to proxy"
   type        = list(string)
@@ -44,4 +39,17 @@ variable "reserved_concurrent_executions" {
   type        = number
   default     = 1
 }
+
+variable "expected_header_key" {
+  description = "(Optional) Header key that must be included on all requests"
+  type        = string
+  default     = ""
+}
+
+variable "expected_header_value" {
+  description = "(Optional) Header value that must be included on all requests"
+  type        = string
+  default     = ""
+}
+
 
