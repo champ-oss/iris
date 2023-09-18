@@ -3,7 +3,7 @@ module github.com/champ-oss/iris/terraform
 go 1.17
 
 require (
-	github.com/gruntwork-io/terratest v0.43.11
+	github.com/gruntwork-io/terratest v0.44.0
 	github.com/stretchr/testify v1.8.2
 )
 
