@@ -13,7 +13,7 @@ module "hash" {
 }
 
 module "lambda" {
-  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.121-73d2ca1"
+  source                          = "github.com/champ-oss/terraform-aws-lambda.git?ref=v1.0.127-4a4ac92"
   git                             = var.git
   name                            = "lambda"
   vpc_id                          = var.enable_vpc ? var.vpc_id : null
